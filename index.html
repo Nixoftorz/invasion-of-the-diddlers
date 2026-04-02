@@ -1,31 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invasion of the Diddlers - Dalton's Edition</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Invasion of the Diddlers: Daltons Edition</title>
+    <style>
+        body { margin: 0; background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; color: #fff; }
+        .game-container { text-align: center; padding: 20px; border: 2px solid #444; border-radius: 20px; }
+        canvas { border: 5px solid #555; background: #000; cursor: crosshair; }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Invasion of the Diddlers</h1>
-    </header>
-    <main>
-        <section>
-            <h2>Welcome</h2>
-            <p>This is the Dalton's Edition of Invasion of the Diddlers. Enjoy your stay!</p>
-        </section>
-        <section>
-            <h2>Features</h2>
-            <ul>
-                <li>Feature 1</li>
-                <li>Feature 2</li>
-                <li>Feature 3</li>
-            </ul>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2026 Nixoftorz. All rights reserved.</p>
-    </footer>
+    <div class='game-container'>
+        <h2>Invasion of the Diddlers: Daltons Edition</h2>
+        <canvas id='gameCanvas' width='800' height='600'></canvas>
+        <p>← → Move | [Space] Jump | [F] Shoot | [P] Pause</p>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const imgs = { reg: new Image(), diddy: new Image(), rkelly: new Image(), epstein: new Image(), player: new Image(), bg: new Image(), edp: new Image() };
+        imgs.reg.src = 'data:image/webp;base64,UklGRhILAABXRUJQVlA4IAYLAACwYwCdASpgAeoAPp1Mn0qlpKapqnQpQTATiWduvTBpP6ZW5kdE/pJ383kmvPoWVEn6vzNdR3TE5gjARID2Y3bLf0w1AdL1VRk7pymZiqSjP7tlrOWHblaAX6I7SK2Dl';
+        const audio = { death: new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA//uQZAAAAxwWRjU94AAuYhiBoaQAEqTvLhmMgADtm+UfBFAAAgAALMCcOQ6GSVPoe55vu99yH4LY') };
+    </script>
 </body>
 </html>
