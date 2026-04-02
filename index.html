@@ -4,7 +4,209 @@ import os
 
 <!DOCTYPE html>
 <!-- saved from url=(0087)file:///C:/Users/met/Downloads/Invasion%20of%20the%20Diddlers_%20Daltons%20Edition.html -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html><head><meta httimport pygame
+import random
+import os
+
+# --- Game Initialization ---
+pygame.init()
+
+# --- Screen Dimensions ---
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Platformer Shooter")
+
+# --- Colors ---
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+# --- Player Class ---
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([30, 50])
+        self.image.fill(BLUE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (SCREEN_WIDTH // 4, SCREEN_HEIGHT - 50)
+        self.change_x = 0
+        self.change_y = 0
+        self.on_ground = True # For basic jumping
+        self.direction = 1 # 1 for right, -1 for left
+
+    def update(self):
+        # Basic horizontal movement
+        self.rect.x += self.change_x
+
+        # Update player direction
+        if self.change_x > 0:
+            self.direction = 1
+        elif self.change_x < 0:
+            self.direction = -1
+
+        # Basic vertical movement (gravity and jump)
+        if not self.on_ground:
+            self.change_y += 0.35 # Gravity
+        self.rect.y += self.change_y
+
+        # Keep player within screen bounds
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
+
+        # Simulate ground for now
+        if self.rect.bottom >= SCREEN_HEIGHT - 10: # Simple ground level
+            self.rect.bottom = SCREEN_HEIGHT - 10
+            self.change_y = 0
+            self.on_ground = True
+
+    def jump(self):
+        if self.on_ground:
+            self.change_y = -10 # Jump strength
+            self.on_ground = False
+
+    def go_left(self):
+        self.change_x = -5
+
+    def go_right(self):
+        self.change_x = 5
+
+    def stop(self):
+        self.change_x = 0
+
+# --- Enemy Class ---
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, image_path, speed, player_rect):
+        super().__init__()
+        # Load enemy image
+        if not os.path.exists(image_path):
+            print(f"Error: Enemy image not found at {image_path}")
+            pygame.quit()
+            exit()
+
+        original_image = pygame.image.load(image_path).convert_alpha()
+        self.image = pygame.transform.scale(original_image, (40, 40)) # Scale image
+        self.rect = self.image.get_rect()
+
+        self.speed = speed
+        self.player_rect = player_rect
+        self.spawn_side = random.choice(['left', 'right'])
+
+        if self.spawn_side == 'left':
+            self.rect.x = -self.rect.width
+        else:
+            self.rect.x = SCREEN_WIDTH
+
+        self.rect.y = random.randint(SCREEN_HEIGHT // 2, SCREEN_HEIGHT - 50 - self.rect.height) # Spawn above ground
+
+    def update(self):
+        # Simple pathfinding: chase the player (basic horizontal movement towards player)
+        if self.player_rect.x < self.rect.x:
+            self.rect.x -= self.speed
+        elif self.player_rect.x > self.rect.x:
+            self.rect.x += self.speed
+
+        # Enemies despawn when far off-screen
+        if self.rect.x < -100 or self.rect.x > SCREEN_WIDTH + 100:
+            self.kill()
+
+# --- Bullet Class ---
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        super().__init__()
+        self.image = pygame.Surface([10, 5])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = 10 * direction # Bullet speed depends on direction
+
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.left > SCREEN_WIDTH or self.rect.right < 0:
+            self.kill()
+
+# --- Game Setup ---
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
+
+player = Player()
+all_sprites.add(player)
+
+enemy_image_path = '/content/OIP.webp' # Path to the user-provided image
+enemy_spawn_timer = 0
+DIFFICULTY = 1 # Initial difficulty
+
+# --- Game Loop ---
+running = True
+clock = pygame.time.Clock()
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                player.go_left()
+            if event.key == pygame.K_RIGHT:
+                player.go_right()
+            if event.key == pygame.K_UP:
+                player.jump()
+            if event.key == pygame.K_SPACE:
+                # Shooting logic
+                bullet = Bullet(player.rect.centerx, player.rect.centery, player.direction)
+                all_sprites.add(bullet)
+                bullets.add(bullet)
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT and player.change_x < 0:
+                player.stop()
+            if event.key == pygame.K_RIGHT and player.change_x > 0:
+                player.stop()
+
+    # --- Enemy Spawning & Difficulty ---
+    enemy_spawn_timer += 1
+    if enemy_spawn_timer > 60 - (DIFFICULTY * 5): # Spawn faster as difficulty increases
+        enemy_speed = 1 + (DIFFICULTY * 0.2)
+        enemy = Enemy(enemy_image_path, enemy_speed, player.rect)
+        all_sprites.add(enemy)
+        enemies.add(enemy)
+        enemy_spawn_timer = 0
+
+        # Increase difficulty over time (example)
+        if len(enemies) > 5 * DIFFICULTY:
+            DIFFICULTY += 0.1 # Gradually increase difficulty
+
+
+    # --- Update Sprites ---
+    all_sprites.update()
+
+    # --- Collision Detection (Placeholder) ---
+    # Example: player vs enemy collision
+    # player_hit_list = pygame.sprite.spritecollide(player, enemies, True)
+    # for enemy_hit in player_hit_list:
+    #     print("Player hit! Game Over!") # Or decrease health
+    #     running = False
+
+    # Example: bullet vs enemy collision
+    # bullet_hit_list = pygame.sprite.groupcollide(bullets, enemies, True, True)
+    # for bullet in bullet_hit_list:
+    #     print("Enemy hit!")
+    #     # Increase score
+
+    # --- Drawing ---
+    screen.fill(BLACK) # Clear screen
+    all_sprites.draw(screen)
+
+    # --- Update Display ---
+    pygame.display.flip()
+
+    # --- Frame Rate ---
+    clock.tick(60)
+
+pygame.quit()p-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Invasion of the Diddlers: Daltons Edition</title>
     <style>
         body { margin: 0; background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; color: #fff; }
